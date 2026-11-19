@@ -1,0 +1,233 @@
+{
+  "entities": {
+    "BikeProfile": {
+      "title": "BikeProfile",
+      "description": "Rider's Honda CB350RS profile, odometer, paired Bluetooth device metadata, and saved navigation shortcuts.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID of the bike owner."
+        },
+        "modelName": {
+          "type": "string",
+          "description": "Motorcycle model name (default Honda CB350RS)."
+        },
+        "nickname": {
+          "type": "string",
+          "description": "Custom rider nickname for the motorcycle."
+        },
+        "modelYear": {
+          "type": "integer",
+          "description": "Model year of the motorcycle."
+        },
+        "plateNumber": {
+          "type": "string",
+          "description": "Optional license plate or registration number."
+        },
+        "odometerKm": {
+          "type": "integer",
+          "description": "Current recorded odometer reading in kilometers."
+        },
+        "pairedDeviceName": {
+          "type": "string",
+          "description": "Last paired Bluetooth cluster or OBD adapter name."
+        },
+        "pairedDeviceAddress": {
+          "type": "string",
+          "description": "Last paired Bluetooth hardware MAC address."
+        },
+        "homeAddress": {
+          "type": "string",
+          "description": "Saved home destination for quick turn-by-turn launch."
+        },
+        "serviceCenterName": {
+          "type": "string",
+          "description": "Preferred Honda BigWing or service workshop destination."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the bike profile was created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last profile update (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "modelName",
+        "nickname",
+        "modelYear",
+        "odometerKm",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ServiceRecord": {
+      "title": "ServiceRecord",
+      "description": "Motorcycle maintenance and service log entry for Honda CB350RS interval tracking.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID of the owner."
+        },
+        "title": {
+          "type": "string",
+          "description": "Short summary of the service performed."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "ENGINE_OIL",
+            "CHAIN_CARE",
+            "BRAKES",
+            "TIRES",
+            "AIR_FILTER",
+            "BATTERY",
+            "GENERAL_SERVICE",
+            "REPAIR"
+          ],
+          "description": "Maintenance category used to compute CB350RS factory service intervals."
+        },
+        "odometerKm": {
+          "type": "integer",
+          "description": "Odometer reading in km at the time of service."
+        },
+        "costAmount": {
+          "type": "number",
+          "description": "Service cost amount."
+        },
+        "serviceDate": {
+          "type": "string",
+          "description": "Date of service in YYYY-MM-DD format."
+        },
+        "workshopName": {
+          "type": "string",
+          "description": "Optional workshop or Honda BigWing service center name."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes, parts replaced, or oil grade details."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "category",
+        "odometerKm",
+        "costAmount",
+        "serviceDate",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DiagnosticLog": {
+      "title": "DiagnosticLog",
+      "description": "Vehicle ECU diagnostic snapshot captured over Bluetooth OBD-II or manual pre-ride inspection.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID of the owner."
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "BLUETOOTH_OBD",
+            "MANUAL_CHECK"
+          ],
+          "description": "Origin of the diagnostic snapshot."
+        },
+        "batteryVoltage": {
+          "type": "number",
+          "description": "Measured battery voltage in Volts."
+        },
+        "engineTempC": {
+          "type": "integer",
+          "description": "Engine or oil temperature in degrees Celsius."
+        },
+        "rpmPeak": {
+          "type": "integer",
+          "description": "Recorded RPM reading during diagnostic check."
+        },
+        "odometerKm": {
+          "type": "integer",
+          "description": "Odometer reading in km at snapshot time."
+        },
+        "dtcCodes": {
+          "type": "array",
+          "description": "Bounded list of up to 20 OBD-II DTC fault codes."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "HEALTHY",
+            "WARNING",
+            "FAULT"
+          ],
+          "description": "Overall diagnostic health status."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional diagnostic notes."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when logged (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "source",
+        "batteryVoltage",
+        "engineTempC",
+        "rpmPeak",
+        "odometerKm",
+        "dtcCodes",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/bikes/{bikeId}": {
+      "schema": {
+        "$ref": "#/entities/BikeProfile"
+      },
+      "description": "User-scoped motorcycle garage profiles."
+    },
+    "/users/{userId}/serviceRecords/{recordId}": {
+      "schema": {
+        "$ref": "#/entities/ServiceRecord"
+      },
+      "description": "User-scoped CB350RS maintenance and service history logs."
+    },
+    "/users/{userId}/diagnosticLogs/{logId}": {
+      "schema": {
+        "$ref": "#/entities/DiagnosticLog"
+      },
+      "description": "User-scoped OBD-II and vehicle health diagnostic snapshots."
+    }
+  }
+}

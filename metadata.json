@@ -1,0 +1,6 @@
+{
+  "name": "MotoLink RS",
+  "description": "Bluetooth companion cockpit for Honda CB350RS riders featuring handlebar music controls, turn-by-turn navigation relay, live OBD/BLE vehicle diagnostics, and cloud-synced service tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

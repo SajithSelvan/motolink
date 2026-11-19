@@ -1,0 +1,64 @@
+<resources>
+    <string name="app_name">MotoLink RS</string>
+    <string name="app_tagline">CB350RS Bluetooth Cockpit</string>
+    <string name="notification_relay_service_label">MotoLink RS Dash Relay</string>
+
+    <!-- Navigation Tabs -->
+    <string name="nav_cockpit">Cockpit</string>
+    <string name="nav_ride">Ride &amp; Nav</string>
+    <string name="nav_diagnostics">Diagnostics</string>
+    <string name="nav_service">Service</string>
+
+    <!-- Auth -->
+    <string name="auth_headline">MotoLink RS</string>
+    <string name="auth_subtitle">Connect your Honda CB350RS over Bluetooth for handlebar music, turn-by-turn navigation relay, live OBD-II diagnostics, and cloud-synced service logs.</string>
+    <string name="auth_sign_in_google">Sign in with Google</string>
+    <string name="auth_signing_in">Connecting Garage…</string>
+    <string name="auth_feature_bt">BLE &amp; ELM327 Bluetooth Link</string>
+    <string name="auth_feature_media">Switchgear Music &amp; Nav Relay</string>
+    <string name="auth_feature_service">CB350RS Maintenance Intervals</string>
+
+    <!-- Bluetooth -->
+    <string name="bt_connect_bike">Connect CB350RS</string>
+    <string name="bt_disconnect">Disconnect</string>
+    <string name="bt_scan_devices">Scan Nearby Devices</string>
+    <string name="bt_stop_scan">Stop Scan</string>
+    <string name="bt_grant_permission">Grant Bluetooth Access</string>
+    <string name="bt_status_disconnected">Not Connected</string>
+    <string name="bt_status_scanning">Scanning…</string>
+    <string name="bt_status_connecting">Linking…</string>
+    <string name="bt_status_connected">Connected</string>
+    <string name="bt_perm_banner_title">Bluetooth &amp; Location Access Required</string>
+    <string name="bt_perm_banner_body">Allow Nearby Devices &amp; Location to discover and connect your Honda CB350RS OBD-II adapter.</string>
+    <string name="bt_perm_dialog_title">CB350RS Bluetooth Permissions</string>
+    <string name="bt_perm_dialog_subtitle">MotoLink RS uses Android runtime permissions to discover your ELM327 OBD-II adapter, maintain the Bluetooth link, and track live ride telemetry.</string>
+    <string name="bt_perm_permanently_denied_hint">One or more permissions were denied with "Don\'t ask again". Open Android App Settings to enable Nearby Devices and Location.</string>
+    <string name="bt_perm_grant_cta">Grant Permissions</string>
+    <string name="bt_perm_open_settings">Open App Settings</string>
+    <string name="bt_perm_not_now">Not Now</string>
+
+    <!-- Music & Navigation -->
+    <string name="music_panel_title">Handlebar Media Control</string>
+    <string name="music_enable_relay">Enable Live Track &amp; Nav Relay</string>
+    <string name="nav_panel_title">Turn-by-Turn Dash Relay</string>
+    <string name="nav_destination_hint">Destination (e.g., Nandi Hills, BigWing)</string>
+    <string name="nav_launch_maps">Start Navigation</string>
+    <string name="gps_start_ride">Start Live GPS Ride</string>
+    <string name="gps_stop_ride">End Ride</string>
+    <string name="gps_add_to_odometer">Add Trip to Odometer</string>
+
+    <!-- Diagnostics -->
+    <string name="diag_title">OBD-II &amp; ECU Diagnostics</string>
+    <string name="diag_poll_now">Read Live ECU</string>
+    <string name="diag_read_dtc">Scan Fault Codes</string>
+    <string name="diag_clear_dtc">Clear DTCs</string>
+    <string name="diag_save_snapshot">Save Diagnostic Snapshot</string>
+    <string name="diag_log_manual">Log Pre-Ride Check</string>
+
+    <!-- Service -->
+    <string name="service_title">CB350RS Service Tracker</string>
+    <string name="service_add_record">Log Service</string>
+    <string name="service_edit_bike">Bike Profile</string>
+    <string name="service_empty_title">No service records yet</string>
+    <string name="service_empty_body">Log your first oil change, chain lube, or BigWing service to automatically track Honda CB350RS maintenance intervals.</string>
+</resources>

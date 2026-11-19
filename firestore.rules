@@ -1,0 +1,198 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Helper Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidOptionalString(data, field, maxLen) {
+      return !(field in data) || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function isValidTimestamp(val) {
+      return val is timestamp && val <= request.time;
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidBikeProfile(data, userId) {
+      return data.userId == userId &&
+             data.modelName is string && data.modelName.size() >= 1 && data.modelName.size() <= 60 &&
+             data.nickname is string && data.nickname.size() >= 1 && data.nickname.size() <= 40 &&
+             data.modelYear is int && data.modelYear >= 2000 && data.modelYear <= 2035 &&
+             data.odometerKm is int && data.odometerKm >= 0 && data.odometerKm <= 999999 &&
+             isValidOptionalString(data, 'plateNumber', 20) &&
+             isValidOptionalString(data, 'pairedDeviceName', 80) &&
+             isValidOptionalString(data, 'pairedDeviceAddress', 32) &&
+             isValidOptionalString(data, 'homeAddress', 120) &&
+             isValidOptionalString(data, 'serviceCenterName', 80) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidServiceCategory(cat) {
+      return cat in [
+        'ENGINE_OIL',
+        'CHAIN_CARE',
+        'BRAKES',
+        'TIRES',
+        'AIR_FILTER',
+        'BATTERY',
+        'GENERAL_SERVICE',
+        'REPAIR'
+      ];
+    }
+
+    function isValidServiceRecord(data, userId) {
+      return data.userId == userId &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 80 &&
+             data.category is string && isValidServiceCategory(data.category) &&
+             data.odometerKm is int && data.odometerKm >= 0 && data.odometerKm <= 999999 &&
+             data.costAmount is number && data.costAmount >= 0 && data.costAmount <= 1000000 &&
+             data.serviceDate is string && data.serviceDate.size() >= 4 && data.serviceDate.size() <= 20 &&
+             isValidOptionalString(data, 'workshopName', 80) &&
+             isValidOptionalString(data, 'notes', 400) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidDiagnosticLog(data, userId) {
+      return data.userId == userId &&
+             data.source is string && data.source in ['BLUETOOTH_OBD', 'MANUAL_CHECK'] &&
+             data.batteryVoltage is number && data.batteryVoltage >= 0 && data.batteryVoltage <= 24 &&
+             data.engineTempC is int && data.engineTempC >= -40 && data.engineTempC <= 250 &&
+             data.rpmPeak is int && data.rpmPeak >= 0 && data.rpmPeak <= 15000 &&
+             data.odometerKm is int && data.odometerKm >= 0 && data.odometerKm <= 999999 &&
+             data.dtcCodes is list && data.dtcCodes.size() <= 20 &&
+             (data.dtcCodes.size() == 0 || (data.dtcCodes[0] is string && data.dtcCodes[0].size() <= 24)) &&
+             data.status is string && data.status in ['HEALTHY', 'WARNING', 'FAULT'] &&
+             isValidOptionalString(data, 'notes', 300) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    // 4. User-Scoped Collections
+    match /users/{userId}/bikes/{bikeId} {
+      allow get: if isOwner(userId) && isValidId(bikeId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(bikeId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'modelName', 'nickname', 'modelYear',
+                         'odometerKm', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'modelName', 'nickname', 'modelYear',
+                         'plateNumber', 'odometerKm', 'pairedDeviceName',
+                         'pairedDeviceAddress', 'homeAddress', 'serviceCenterName',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidBikeProfile(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(bikeId) &&
+                       isValidBikeProfile(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Action: Update bike profile / odometer / Bluetooth pairing / saved nav places
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'modelName', 'nickname', 'modelYear', 'plateNumber',
+                           'odometerKm', 'pairedDeviceName', 'pairedDeviceAddress',
+                           'homeAddress', 'serviceCenterName', 'updatedAt'
+                         ])
+                       );
+
+      allow delete: if isOwner(userId) && isValidId(bikeId);
+    }
+
+    match /users/{userId}/serviceRecords/{recordId} {
+      allow get: if isOwner(userId) && isValidId(recordId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(recordId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'title', 'category', 'odometerKm',
+                         'costAmount', 'serviceDate', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'title', 'category', 'odometerKm',
+                         'costAmount', 'serviceDate', 'workshopName', 'notes',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidServiceRecord(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(recordId) &&
+                       isValidServiceRecord(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Action: Edit service record details
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'category', 'odometerKm', 'costAmount',
+                           'serviceDate', 'workshopName', 'notes', 'updatedAt'
+                         ])
+                       );
+
+      allow delete: if isOwner(userId) && isValidId(recordId);
+    }
+
+    match /users/{userId}/diagnosticLogs/{logId} {
+      allow get: if isOwner(userId) && isValidId(logId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(logId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'source', 'batteryVoltage', 'engineTempC',
+                         'rpmPeak', 'odometerKm', 'dtcCodes', 'status',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'source', 'batteryVoltage', 'engineTempC',
+                         'rpmPeak', 'odometerKm', 'dtcCodes', 'status',
+                         'notes', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidDiagnosticLog(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(logId) &&
+                       isValidDiagnosticLog(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Action: Update diagnostic notes or status
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'notes', 'status', 'updatedAt'
+                         ])
+                       );
+
+      allow delete: if isOwner(userId) && isValidId(logId);
+    }
+  }
+}
