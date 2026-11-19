@@ -55,6 +55,7 @@ import com.example.R
 import com.example.data.model.BikeProfile
 import com.example.data.model.MaintenanceIntervalStatus
 import com.example.data.model.UiState
+import com.example.data.navigation.NavigationOverlayUiState
 import com.example.hardware.BluetoothUiState
 import com.example.hardware.BtConnectionState
 import com.example.hardware.LiveRideTelemetry
@@ -62,8 +63,10 @@ import com.example.hardware.MediaControlState
 import com.example.hardware.MediaController
 import com.example.service.RelayedMediaInfo
 import com.example.service.RelayedNavManeuver
+import com.example.ui.components.BluetoothPermissionSnapshot
 import com.example.ui.components.BluetoothStatusPill
 import com.example.ui.components.ObdLiveDashboard
+import com.example.ui.components.RideWorkflowLauncherCard
 import com.example.ui.components.maneuverIcon
 import com.example.ui.theme.DiagnosticTeal
 import com.example.ui.theme.FaultRed
@@ -77,11 +80,14 @@ fun CockpitScreen(
     bikeState: UiState<BikeProfile?>,
     intervals: List<MaintenanceIntervalStatus>,
     btState: BluetoothUiState,
+    permissionSnapshot: BluetoothPermissionSnapshot,
+    navOverlayState: NavigationOverlayUiState,
     mediaState: MediaControlState,
     mediaController: MediaController,
     relayedMedia: RelayedMediaInfo,
     relayedNav: RelayedNavManeuver?,
     rideState: LiveRideTelemetry,
+    onOpenRideWorkflow: (initialStep: Int) -> Unit,
     onOpenBluetoothSheet: () -> Unit,
     onPollObdNow: () -> Unit,
     onOpenBikeProfileEditor: () -> Unit,
@@ -279,6 +285,17 @@ fun CockpitScreen(
                         }
                     }
                 }
+            }
+
+            // 4-Step CB350RS Pre-Ride & Ride Launch Workflow Launcher
+            item {
+                RideWorkflowLauncherCard(
+                    permissionSnapshot = permissionSnapshot,
+                    btState = btState,
+                    navOverlayState = navOverlayState,
+                    rideState = rideState,
+                    onOpenWorkflow = onOpenRideWorkflow
+                )
             }
 
             // Active Turn-by-Turn Navigation Relay Banner (if live maneuver active)

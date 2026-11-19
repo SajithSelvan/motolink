@@ -45,6 +45,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -82,6 +83,7 @@ import com.example.ui.MotoViewModel
 import com.example.ui.components.BluetoothDeviceSheet
 import com.example.ui.components.BluetoothPermissionBanner
 import com.example.ui.components.BluetoothPermissionRationaleDialog
+import com.example.ui.components.RideWorkflowSheet
 import com.example.ui.components.SafetySimulationBanner
 import com.example.ui.components.TurnByTurnNavOverlay
 import com.example.ui.components.evaluateBluetoothPermissions
@@ -217,6 +219,8 @@ private fun MotoLinkAuthenticatedShell(
 
     var showBluetoothSheet by remember { mutableStateOf(false) }
     var showBikeProfileDialog by remember { mutableStateOf(false) }
+    var showRideWorkflowSheet by remember { mutableStateOf(false) }
+    var workflowInitialStep by remember { mutableIntStateOf(0) }
     var hasRequestedBtPermissions by remember { mutableStateOf(false) }
     var showBtPermissionDialog by remember { mutableStateOf(false) }
     var btPermissionBannerDismissed by remember { mutableStateOf(false) }
@@ -431,11 +435,18 @@ private fun MotoLinkAuthenticatedShell(
                                 bikeState = bikeState,
                                 intervals = intervals,
                                 btState = btState,
+                                permissionSnapshot = btPermissionSnapshot,
+                                navOverlayState = navOverlayState,
                                 mediaState = mediaState,
                                 mediaController = viewModel,
                                 relayedMedia = relayedMedia,
                                 relayedNav = relayedNav,
                                 rideState = rideState,
+                                onOpenRideWorkflow = { step ->
+                                    refreshAllPermissions()
+                                    workflowInitialStep = step
+                                    showRideWorkflowSheet = true
+                                },
                                 onOpenBluetoothSheet = {
                                     viewModel.refreshBluetoothState()
                                     showBluetoothSheet = true
@@ -597,6 +608,56 @@ private fun MotoLinkAuthenticatedShell(
                 }
             },
             onDismiss = { showBtPermissionDialog = false }
+        )
+    }
+
+    if (showRideWorkflowSheet) {
+        RideWorkflowSheet(
+            initialStep = workflowInitialStep,
+            bikeProfile = bikeProfile,
+            intervals = intervals,
+            permissionSnapshot = btPermissionSnapshot,
+            btState = btState,
+            rideState = rideState,
+            onDismiss = { showRideWorkflowSheet = false },
+            onRequestPermissions = { requestBluetoothPermissionsFlow() },
+            onOpenAppSettings = {
+                if (!openAppPermissionSettings(context)) {
+                    viewModel.showMessage("Open Android Settings -> Apps -> MotoLink RS -> Permissions")
+                }
+            },
+            onOpenBluetoothSheet = {
+                showRideWorkflowSheet = false
+                viewModel.refreshBluetoothState()
+                showBluetoothSheet = true
+            },
+            onToggleSafetySimulation = viewModel::toggleSafetySimulationMode,
+            onPollObdAndScanDtcs = {
+                viewModel.pollObdNow()
+                viewModel.scanObdDtcs()
+            },
+            onSaveLiveSnapshot = { viewModel.saveLiveDiagnosticSnapshot("Pre-ride workflow check") },
+            onLaunchRide = { destination, startMusic, startGps ->
+                if (startGps && !rideState.trackingActive) {
+                    if (viewModel.rideLocationManager.hasLocationPermission()) {
+                        viewModel.toggleRideTracking()
+                    } else {
+                        locationPermissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            )
+                        )
+                    }
+                }
+                if (startMusic) {
+                    viewModel.play()
+                }
+                if (destination.isNotBlank()) {
+                    viewModel.startGoogleMapsNavigation(destination)
+                }
+                viewModel.showMessage("CB350RS Ride Workflow launched — ride safe!")
+            }
         )
     }
 
